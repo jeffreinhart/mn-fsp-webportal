@@ -1,0 +1,66 @@
+body {
+    font-family: "Trebuchet MS", Trebuchet, Helvetica, Verdana, sans-serif;
+}
+
+h1 {
+    font-family: "Times New Roman", Georgia, Serif;
+    color: rgb(70,51,34)
+}
+
+#header {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: rgb(219,238,170);
+    border-bottom: solid;
+    border-bottom-color: rgb(141,163,86);
+}
+
+#searchDiv {
+    padding-left: 10px;
+}
+
+#viewButtonDiv {
+    margin-top: 5px;
+}
+
+#clearButtonDiv {
+    margin-top: 5px;
+}
+
+#searchResultsButtons {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+#searchResultsDiv {
+    height: 150px;
+    border-style: solid;
+    border-width: 1pt;
+    border-color: rgb(141,163,86);
+    background-color: rgb(219,238,170);
+    background-image: url("Images/SearchBackground.png");
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+#stewPlanDetails {
+    height: 500px;
+    background-color: rgb(240,240,240);
+    border-style: solid;
+    border-width: 1pt;
+    border-color: rgb(141,163,86);
+    margin-top: 10px;
+    padding: 5px;
+}
+
+#mapDiv{
+    height: 500px;
+    border-style: solid;
+    border-width: 1pt;
+    border-color: rgb(141,163,86);
+    margin-top: 10px;
+}
+
+#dnr_logo {
+    alignment: center;
+}
