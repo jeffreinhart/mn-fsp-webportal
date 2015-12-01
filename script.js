@@ -4,7 +4,7 @@
  Declaring the map as a global is useful for debugging.
  */
 var map;
-var ipAddress = "54.172.224.143";
+var ipAddress = "52.90.249.239";
 var basemapOverlayUrl = "http://"+ipAddress+":6080/arcgis/rest/services/PFM_Portal_Basemap/MapServer";
 var stewPlansServiceUrl = "http://dev.dnr.state.mn.us/arcgis/rest/services/for/mndnr_for_registered_forest_stewardship_plans/MapServer";
 var stewPlansLayerUrl = stewPlansServiceUrl+"/0";
