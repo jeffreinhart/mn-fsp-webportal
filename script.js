@@ -4,7 +4,7 @@
  Declaring the map as a global is useful for debugging.
  */
 var map;
-var ipAddress = "54.173.198.121";
+var ipAddress = "52.91.50.212";
 var basemapOverlayUrl = "http://"+ipAddress+":6080/arcgis/rest/services/PFM_Portal_Basemap/MapServer";
 var stewPlansServiceUrl = "http://dev.dnr.state.mn.us/arcgis/rest/services/for/mndnr_for_registered_forest_stewardship_plans/MapServer";
 var stewPlansLayerUrl = stewPlansServiceUrl+"/0";
@@ -24,16 +24,70 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
          ItemFileWriteStore, Query, QueryTask,
          SimpleFillSymbol, SimpleLineSymbol, Color,
          dom) {
+    // tics to short date
+    function format(date) {
+        return locale.format(date, {selector: "date", datePattern: "MMM d, yyyy"});
+    } // end function format
+
+    // build plan details, input is array
+    function buildPlanDetailsHtml(arr){
+        planDetailsHtml = "";
+        planDetailsHtml += "<p><strong>Landowner Name: </strong>"+arr.lo_fname+" "+arr.lo_lname+"</p>";
+        if(arr.lo_cname){
+            planDetailsHtml += "<p><strong>Company Name: </strong>"+arr.lo_cname+"</p>";
+        }
+        planDetailsHtml += "<p><strong>Address:</strong></p>";
+        planDetailsHtml += "<p>"+arr.addr_l1+"</p>";
+        if(arr.addr_l2){
+            planDetailsHtml += "<p>"+arr.addr_l2+"</p>";
+        }
+        planDetailsHtml += "<p>"+arr.addr_city+", "+arr.addr_state+" "+arr.addr_zip+"</p>";
+        if(typeof arr.date_plan === 'number'){
+            formattedDate = format(new Date(arr.date_plan));
+            planDetailsHtml += "<p><strong>Plan Date: </strong>"+formattedDate+"</p>";
+        } else {
+            planDetailsHtml += "<p><strong>Plan Date: </strong>"+arr.date_plan+"</p>";
+        }
+        planDetailsHtml += "<p><strong>Plan Acres: </strong>"+arr.acres_plan+"</p>";
+        planDetailsHtml += "<p><strong>Registration Number: </strong>"+arr.reg_num+"</p>";
+        planDetailsHtml += "<p><strong>Counties: </strong></p>";
+        if(typeof arr.county1 !== 'string'){
+            if(arr.county5[0] !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+", "+arr.county3+", "+arr.county4+", "+arr.county5+"</p>";
+            } else if(arr.county4[0] !== ""){
+                planDetailsHtml[0] += "<p>"+arr.county1+", "+arr.county2+", "+arr.county3+", "+arr.county4+"</p>";
+            } else if(arr.county3[0] !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+", "+arr.county3+"</p>";
+            } else if(arr.county2[0] !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+"</p>";
+            } else {
+                planDetailsHtml += "<p>"+arr.county1+"</p>";
+            }
+        } else {
+            if(arr.county5 !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+", "+arr.county3+", "+arr.county4+", "+arr.county5+"</p>";
+            } else if(arr.county4 !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+", "+arr.county3+", "+arr.county4+"</p>";
+            } else if(arr.county3 !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+", "+arr.county3+"</p>";
+            } else if(arr.county2 !== ""){
+                planDetailsHtml += "<p>"+arr.county1+", "+arr.county2+"</p>";
+            } else {
+                planDetailsHtml += "<p>"+arr.county1+"</p>";
+            }
+        }
+        planDetailsHtml += "<p><strong>Plan Writer:</strong></p>";
+        planDetailsHtml += "<p>"+arr.for_fname+" "+arr.for_lname+"</p>";
+        planDetailsHtml += "<p>"+arr.for_cname+"</p>";
+        return planDetailsHtml;
+    } // end function buildPlanDetailsHtml
+
     // initialize the map
     map = new Map("mapDiv", {
         center: [-93.6127, 46.5],
         zoom: 6,
         basemap: "satellite"
     });
-
-    function format(date) {
-        return locale.format(date, {selector: "date", datePattern: "MMM d, yyyy"});
-    }
 
     // variables for output fields in info template
     var outFields = ["pfmm_id", "county1", "county2", "county3", "county4", "county5", "lo_fname", "lo_lname", "lo_cname", "addr_l1", "addr_l2", "addr_city", "addr_state", "addr_zip", "addr_nmail", "date_plan", "date_submt", "date_rgstr", "reg_num", "acres_plan", "for_fname", "for_lname", "for_cname", "for_type"];
@@ -50,6 +104,14 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
         infoTemplate: planInfoTemplate
     });
     map.addLayer(stewPlansLayer);
+
+    // on click of stewardship plans layer, update the Stewardship Plan Details
+    stewPlansLayer.on("click", function(evt){
+        // get the graphic properties
+        graphicAttributes = evt.graphic.attributes;
+        // update the infoDiv
+        dom.byId("planDetails").innerHTML = buildPlanDetailsHtml(graphicAttributes);
+    });
 
     // search widget (how to search by county?)
     var search = new Search({
@@ -74,7 +136,6 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
     grid = null;
 
     search.on("search-results", function (e) {
-        console.log("search");
         // get results
         var results = e.results[0];
 
@@ -93,30 +154,30 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             if (attr.date_rgstr){attr.date_rgstr = format(new Date(attr.date_rgstr));}
             data.items.push({
                 id: i,
-                pfmmId: attr.pfmm_id,
-                County1: attr.county1,
-                County2: attr.county2,
-                County3: attr.county3,
-                County4: attr.county4,
-                County5: attr.county5,
-                loFname: attr.lo_fname,
-                loLname: attr.lo_lname,
-                loCname: attr.lo_cname,
-                addrL1: attr.addr_l1,
-                addrL2: attr.addr_l2,
-                addrCity: attr.addr_city,
-                addrState: attr.addr_state,
-                addrZip: attr.addr_zip,
-                addrNmail: attr.addr_nmail,
-                datePlan: attr.date_plan,
-                dateSubmt: attr.date_submt,
-                dateRgstr: attr.date_rgstr,
-                regNum: attr.reg_num,
-                acresPlan: attr.acres_plan,
-                forFname: attr.for_fname,
-                forLname: attr.for_lname,
-                forCname: attr.for_cname,
-                forType: attr.for_type,
+                pfmm_id: attr.pfmm_id,
+                county1: attr.county1,
+                county2: attr.county2,
+                county3: attr.county3,
+                county4: attr.county4,
+                county5: attr.county5,
+                lo_fname: attr.lo_fname,
+                lo_lname: attr.lo_lname,
+                lo_cname: attr.lo_cname,
+                addr_l1: attr.addr_l1,
+                addr_l2: attr.addr_l2,
+                addr_city: attr.addr_city,
+                addr_state: attr.addr_state,
+                addr_zip: attr.addr_zip,
+                addr_nmail: attr.addr_nmail,
+                date_plan: attr.date_plan,
+                date_submt: attr.date_submt,
+                date_rgstr: attr.date_rgstr,
+                reg_num: attr.reg_num,
+                acres_plan: attr.acres_plan,
+                for_fname: attr.for_fname,
+                for_lname: attr.for_lname,
+                for_cname: attr.for_cname,
+                for_type: attr.for_type,
                 planExtent: result.extent
             });
         }); // end for each results
@@ -136,30 +197,30 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             // set up the layout for the data grid
             var layout = [[
                 {'name': 'ID', 'field': 'id', 'width': '30px'},
-                {'name': 'Last Name', 'field': 'loLname', 'width': '200px'},
-                {'name': 'First Name', 'field': 'loFname', 'width': '200px'},
-                {'name': 'Company Name', 'field': 'loCname', 'width': '300px'},
-                {'name': 'County 1', 'field': 'County1', 'width': '160px'},
-                {'name': 'County 2', 'field': 'County2', 'width': '160px'},
-                {'name': 'County 3', 'field': 'County3', 'width': '160px'},
-                {'name': 'County 4', 'field': 'County4', 'width': '160px'},
-                {'name': 'County 5', 'field': 'County5', 'width': '160px'},
-                {'name': 'Address Line 1', 'field': 'addrL1', 'width': '300px'},
-                {'name': 'Address Line 2', 'field': 'addrL2', 'width': '300px'},
-                {'name': 'City', 'field': 'addrCity', 'width': '140px'},
-                {'name': 'State', 'field': 'addrState', 'width': '60px'},
-                {'name': 'Zip', 'field': 'addrZip', 'width': '100px'},
-                {'name': 'No Mailings', 'field': 'addrNmail', 'width': '180px'},
-                {'name': 'Plan Date', 'field': 'datePlan', 'width': '180px'},
-                {'name': 'Plan Submission Date', 'field': 'dateSubmt', 'width': '180px'},
-                {'name': 'Date Registered', 'field': 'dateRgstr', 'width': '180px'},
-                {'name': 'Registration Number', 'field': 'regNum', 'width': '150px'},
-                {'name': 'Plan Acres', 'field': 'acresPlan', 'width': '100px'},
-                {'name': 'Forester First Name', 'field': 'forFname', 'width': '200px'},
-                {'name': 'Forester Last Name', 'field': 'forLname', 'width': '200px'},
-                {'name': 'Forester Company', 'field': 'forCname', 'width': '300px'},
-                {'name': 'Forester Type', 'field': 'forType', 'width': '150px'},
-                {'name': 'PFMM Plan ID', 'field': 'pfmmId', 'width': '400px'},
+                {'name': 'Last Name', 'field': 'lo_lname', 'width': '200px'},
+                {'name': 'First Name', 'field': 'lo_fname', 'width': '200px'},
+                {'name': 'Company Name', 'field': 'lo_cname', 'width': '300px'},
+                {'name': 'County 1', 'field': 'county1', 'width': '160px'},
+                {'name': 'County 2', 'field': 'county2', 'width': '160px'},
+                {'name': 'County 3', 'field': 'county3', 'width': '160px'},
+                {'name': 'County 4', 'field': 'county4', 'width': '160px'},
+                {'name': 'County 5', 'field': 'county5', 'width': '160px'},
+                {'name': 'Address Line 1', 'field': 'addr_l1', 'width': '300px'},
+                {'name': 'Address Line 2', 'field': 'addr_l2', 'width': '300px'},
+                {'name': 'City', 'field': 'addr_city', 'width': '140px'},
+                {'name': 'State', 'field': 'addr_state', 'width': '60px'},
+                {'name': 'Zip', 'field': 'addr_zip', 'width': '100px'},
+                {'name': 'No Mailings', 'field': 'addr_nmail', 'width': '180px'},
+                {'name': 'Plan Date', 'field': 'date_plan', 'width': '180px'},
+                {'name': 'Plan Submission Date', 'field': 'date_submt', 'width': '180px'},
+                {'name': 'Date Registered', 'field': 'date_rgstr', 'width': '180px'},
+                {'name': 'Registration Number', 'field': 'reg_num', 'width': '150px'},
+                {'name': 'Plan Acres', 'field': 'acres_plan', 'width': '100px'},
+                {'name': 'Forester First Name', 'field': 'for_fname', 'width': '200px'},
+                {'name': 'Forester Last Name', 'field': 'for_lname', 'width': '200px'},
+                {'name': 'Forester Company', 'field': 'for_cname', 'width': '300px'},
+                {'name': 'Forester Type', 'field': 'for_type', 'width': '150px'},
+                {'name': 'PFMM Plan ID', 'field': 'pfmm_id', 'width': '400px'},
                 {'name': 'Plan Extent', 'field': 'planExtent', 'width': '160px'}
             ]];
 
@@ -179,7 +240,6 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
 
             // on row click, enable View Selected button
             dojo.connect(grid, "onRowClick", function(e) {
-                console.log("hey now");
                 dijit.byId("viewButton").setAttribute('disabled', false);
             });
 
@@ -198,41 +258,18 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             // was in a grid !== null, but disabled button until rowOnClick instead
             var items = grid.selection.getSelected();
 
-            // was in an if items.length, but disabled button until rowOnClick instead
-            dojo.forEach(items, function(item, i){
-                // get attributes from row
-                selPlanExtent = item.planExtent[0];
-                selPfmmId = item.pfmmId[0];
-                selLoLname = item.loLname[0];
-                selLoFname = item.loFname[0];
-                selLoCname = item.loCname[0];
-                selCounty1 = item.County1[0];
-                selCounty2 = item.County2[0];
-                selCounty3 = item.County3[0];
-                selCounty4 = item.County4[0];
-                selCounty5 = item.County5[0];
-                selAddrL1 = item.addrL1[0];
-                selAddrL2 = item.addrL2[0];
-                selAddrCity = item.addrCity[0];
-                selAddrState = item.addrState[0];
-                selAddrZip = item.addrZip[0];
-                selDatePlan = item.datePlan[0];
-                selDateSubmt = item.dateSubmt[0];
-                selDateRgstr = item.dateRgstr[0];
-                selRegNum = item.regNum[0];
-                selAcresPlan = item.acresPlan[0];
-                selForFname = item.forFname[0];
-                selForLname = item.forLname[0];
-                selForCname = item.forCname[0];
-                selForType = item.forType[0];
-            }); // end for each results
+            /* could use a dojo.forEach(items, function(item, i){// get attributes from row and set as var} here,
+               but can only handle one selection, so just us first item. Also was in an if items.length,
+               but disabled button until rowOnClick instead */
+            var selPlanArray = items[0];
+
             // zoom to extent
-            map.setExtent(selPlanExtent, true);
+            map.setExtent(selPlanArray.planExtent[0], true);
             stewPlansLayer.setVisibility(false);
             // build query task
             var queryTask = new QueryTask(stewPlansLayerUrl);
             var query = new Query();
-            query.where = "pfmm_id = '"+selPfmmId+"'";
+            query.where = "pfmm_id = '"+selPlanArray.pfmm_id[0]+"'";
             query.returnGeometry = true;
             query.outFields = outFields;
             query.outSpatialReference = map.spatialReference; // very important if not in web mercator!!
@@ -260,36 +297,7 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
                 map.graphics.add(graphic);
             });
             // update the infoDiv
-            var planDetailsHtml = "";
-            planDetailsHtml += "<p><strong>Landowner Name: </strong>"+selLoFname+" "+selLoLname+"</p>";
-            if(selLoCname){
-                planDetailsHtml += "<p><strong>Company Name: </strong>"+selLoCname+"</p>";
-            }
-            planDetailsHtml += "<p><strong>Address:</strong></p>";
-            planDetailsHtml += "<p>"+selAddrL1+"</p>";
-            if(selAddrL2){
-                planDetailsHtml += "<p>"+selAddrL2+"</p>";
-            }
-            planDetailsHtml += "<p>"+selAddrCity+", "+selAddrState+" "+selAddrZip+"</p>";
-            planDetailsHtml += "<p><strong>Plan Date: </strong>"+selDatePlan+"</p>";
-            planDetailsHtml += "<p><strong>Plan Acres: </strong>"+selAcresPlan+"</p>";
-            planDetailsHtml += "<p><strong>Registration Number: </strong>"+selRegNum+"</p>";
-            planDetailsHtml += "<p><strong>Counties: </strong></p>";
-            if(selCounty5){
-                planDetailsHtml += "<p>"+selCounty1+", "+selCounty2+", "+selCounty3+", "+selCounty4+", "+selCounty5+"</p>";
-            } else if(selCounty4){
-                planDetailsHtml += "<p>"+selCounty1+", "+selCounty2+", "+selCounty3+", "+selCounty4+"</p>";
-            } else if(selCounty3){
-                planDetailsHtml += "<p>"+selCounty1+", "+selCounty2+", "+selCounty3+"</p>";
-            } else if(selCounty2){
-                planDetailsHtml += "<p>"+selCounty1+", "+selCounty2+"</p>";
-            } else {
-                planDetailsHtml += "<p>"+selCounty1+"</p>";
-            }
-            planDetailsHtml += "<p><strong>Plan Writer:</strong></p>";
-            planDetailsHtml += "<p>"+selForFname+" "+selForLname+"</p>";
-            planDetailsHtml += "<p>"+selForCname+"</p>";
-            dom.byId("planDetails").innerHTML = planDetailsHtml;
+            dom.byId("planDetails").innerHTML = buildPlanDetailsHtml(selPlanArray);
             event.stop(e);
         }
     }, "viewButton").startup();
@@ -314,6 +322,7 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             // clear graphics, set back to original zoom, set stewardship layer to visible
             map.graphics.clear();
             map.centerAndZoom([-93.6127, 46.5],6);
+            // TODO: need something here to deal with timing between zoom and visible
             stewPlansLayer.setVisibility(true);
             // set button to disabled
             dijit.byId("clearButton").setAttribute('disabled', true);
