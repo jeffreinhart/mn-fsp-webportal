@@ -4,10 +4,13 @@
     <title>Minnesota Forest Stewardship Plans Web Portal</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://js.arcgis.com/3.14/dijit/themes/claro/claro.css">
+    <link rel="stylesheet" href="http://js.arcgis.com/3.14/esri/css/esri.css">
     <!-- Web Framework CSS - Bootstrap (getbootstrap.com) and Bootstrap-map-js (github.com/esri/bootstrap-map-js) -->
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="//esri.github.io/bootstrap-map-js/src/css/bootstrapmap.css">
-    <script type="text/javascript" src="script.js"></script>
+    <script src="http://js.arcgis.com/3.14/"></script>
+    <script type="text/javascript" src="script_downloadpage.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="claro">
@@ -17,13 +20,15 @@
             <a href="index.html"><h1>Registered Forest Stewardship Plans</h1></a>
         </div>
         <div class="col-sm-2 col-sm-offset-2">
-            <img src="Images\dnr_logo.png" alt="DNR Logo" id="dnr_logo">
+            <img src="Images/dnr_logo.png" alt="DNR Logo" id="dnr_logo">
         </div>
     </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <p><a href="reg-stew-plans.html">Search for Registered Forest Stewardship Plans</a></p>
-            <p><a href="reg-stew-plans-by-county.html">Get Registered Forest Stewardship Plans for a County</a></p>
+    <div class="row" id="buttonsRow">
+        <div class="col-sm-3 col-sm-offset-1">
+            <button id="regStewPlansPage" type="button"></button>
+        </div>
+        <div class="col-sm-3 col-sm-offset-3">
+            <button id="regStewPlansCountyPage" type="button"></button>
         </div>
     </div>
 </div>

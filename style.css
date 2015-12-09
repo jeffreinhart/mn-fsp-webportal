@@ -3,8 +3,8 @@ body {
 }
 
 h1 {
-    font-family: "Times New Roman", Georgia, Serif;
-    color: rgb(70,51,34)
+    font-family: "Times New Roman", Georgia, serif;
+    color: rgb(70,51,34);
 }
 
 #header {
@@ -63,4 +63,22 @@ h1 {
 
 #dnr_logo {
     alignment: center;
+}
+
+.esriPopup .titlePane {
+    background-color: rgb(70,51,34);
+}
+
+#buttonsRow {
+    margin-top: 20px;
+}
+
+#regStewPlansPage {
+    font-size: 1.5em;
+    width: 300px;
+}
+
+#regStewPlansCountyPage {
+    font-size: 1.5em;
+    width: 300px;
 }

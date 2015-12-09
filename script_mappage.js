@@ -1,10 +1,5 @@
-/*
- Use domReady! for simple apps. Switch to dojo/ready if app uses parseOnLoad: true,
- Dojo Dijits, widgets from the Esri library or custom dijits.
- Declaring the map as a global is useful for debugging.
- */
 var map;
-var ipAddress = "52.91.50.212";
+var ipAddress = "52.91.49.43";
 var basemapOverlayUrl = "http://"+ipAddress+":6080/arcgis/rest/services/PFM_Portal_Basemap/MapServer";
 var stewPlansServiceUrl = "http://dev.dnr.state.mn.us/arcgis/rest/services/for/mndnr_for_registered_forest_stewardship_plans/MapServer";
 var stewPlansLayerUrl = stewPlansServiceUrl+"/0";
@@ -90,8 +85,8 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
     });
 
     // variables for output fields in info template
-    var outFields = ["pfmm_id", "county1", "county2", "county3", "county4", "county5", "lo_fname", "lo_lname", "lo_cname", "addr_l1", "addr_l2", "addr_city", "addr_state", "addr_zip", "addr_nmail", "date_plan", "date_submt", "date_rgstr", "reg_num", "acres_plan", "for_fname", "for_lname", "for_cname", "for_type"];
-    var planInfoTemplate = new InfoTemplate("Plan", "Owner name: ${lo_fname} ${lo_lname}<br>Reg Num: ${reg_num}");
+    var outFieldsAll = ["pfmm_id", "county1", "county2", "county3", "county4", "county5", "lo_fname", "lo_lname", "lo_cname", "addr_l1", "addr_l2", "addr_city", "addr_state", "addr_zip", "addr_nmail", "date_plan", "date_submt", "date_rgstr", "reg_num", "acres_plan", "for_fname", "for_lname", "for_cname", "for_type"];
+    var planInfoTemplate = new InfoTemplate("Plan Info", "Owner name: ${lo_fname} ${lo_lname}<br>Company Name: ${lo_cname}<br>Reg Num: ${reg_num}");
 
     // add the overlay tiled service for counties and PLS
     var basemapOverlaylayer = new ArcGISTiledMapServiceLayer(basemapOverlayUrl);
@@ -100,7 +95,7 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
     // add the stewardship plans layer
     var stewPlansLayer = new FeatureLayer(stewPlansLayerUrl,{
         opacity: 0.4,
-        outFields: ["*"],
+        outFields: outFieldsAll,
         infoTemplate: planInfoTemplate
     });
     map.addLayer(stewPlansLayer);
@@ -122,7 +117,7 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             maxSuggestions: 10,
             featureLayer: stewPlansLayer,
             searchFields: ["lo_fname", "lo_lname", "lo_cname"],
-            outFields: outFields,
+            outFields: outFieldsAll,
             displayField: "lo_lname",
             suggestionTemplate: "${lo_lname}, ${lo_fname} - ${lo_cname}",
             name: "pfmm_id",
@@ -239,7 +234,7 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             grid.startup();
 
             // on row click, enable View Selected button
-            dojo.connect(grid, "onRowClick", function(e) {
+            dojo.connect(grid, "onRowClick", function() {
                 dijit.byId("viewButton").setAttribute('disabled', false);
             });
 
@@ -271,7 +266,7 @@ function(Map, ArcGISTiledMapServiceLayer, FeatureLayer,
             var query = new Query();
             query.where = "pfmm_id = '"+selPlanArray.pfmm_id[0]+"'";
             query.returnGeometry = true;
-            query.outFields = outFields;
+            query.outFields = outFieldsAll;
             query.outSpatialReference = map.spatialReference; // very important if not in web mercator!!
             // set up symbology
             var queryGraphicFill = new SimpleFillSymbol(
